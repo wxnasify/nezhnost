@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказы | Нежность</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">НЕЖНОСТЬ</a>
+            <nav class="main-nav">
+                <ul class="nav-links">
+                    <li><a href="index.html">ГЛАВНАЯ</a></li>
+                    <li><a href="index.html#bouquets">БУКЕТЫ</a></li>
+                    <li><a href="about.html">О НАС</a></li>
+                    <li><a href="reviews.html">ОТЗЫВЫ</a></li>
+                    <li><a href="profile.html">ПРОФИЛЬ</a></li>
+                    <li><a href="orders.html">ЗАКАЗЫ</a></li>
+                    <li><a href="cart.html">КОРЗИНА</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons" id="authButtons"></div>
+        </div>
+    </header>
+
+    <main class="orders-page">
+        <h1 class="orders-title">ЗАКАЗЫ</h1>
+        <div id="ordersContent"></div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <div class="footer-brand">НЕЖНОСТЬ</div>
+                <div class="footer-copyright">© 2026 нежность</div>
+                <div class="footer-delivery">доставка цветов в Армавире</div>
+                <div class="footer-social-text">подберем для вас идеальный букет</div>
+            </div>
+            <div class="footer-center">
+                <div class="footer-quote">ДАРИТЬ ЛЮБОВЬ ГОРАЗДО ВАЖНЕЕ, ЧЕМ ЕЕ ПОЛУЧАТЬ ❤️</div>
+            </div>
+            <div class="footer-right">
+                <div class="footer-contacts-title">КОНТАКТЫ</div>
+                <div class="footer-address">Армавир, Кирова, 43</div>
+                <div class="footer-hours">график работы: 09:00 - 17:00</div>
+                <div class="footer-feedback-title">ОБРАТНАЯ СВЯЗЬ</div>
+                <div class="footer-phone">+7 (137) 56-27-65</div>
+                <div class="footer-email">почта<br>nezhnost@mail.ru<br>Пишите свои отзывы нам на почту!</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function updateAuthButtons() {
+            const authContainer = document.getElementById('authButtons');
+            if (!authContainer) return;
+            
+            const currentUser = localStorage.getItem('currentUser');
+            const isLoggedIn = currentUser !== null;
+            
+            if (isLoggedIn) {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find(u => u.email === currentUser);
+                const userName = user ? user.name : currentUser.split('@')[0];
+                
+                authContainer.innerHTML = `
+                    <span class="user-name">${userName}</span>
+                    <button class="auth-btn logout-btn" onclick="logout()">Выйти</button>
+                `;
+            } else {
+                authContainer.innerHTML = `
+                    <button class="auth-btn login-btn" onclick="location.href='login.html'">Вход</button>
+                    <button class="auth-btn register-btn" onclick="location.href='register.html'">Регистрация</button>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('currentUser');
+            alert('Вы вышли из аккаунта');
+            location.reload();
+        }
+        
+        function displayOrders() {
+            const ordersContainer = document.getElementById('ordersContent');
+            if (!ordersContainer) return;
+            
+            const currentUser = localStorage.getItem('currentUser');
+            
+            if (!currentUser) {
+                ordersContainer.innerHTML = `
+                    <div class="empty-orders">
+                        <p class="empty-orders-text">Пожалуйста, войдите в аккаунт, чтобы просмотреть заказы</p>
+                        <button class="login-redirect-btn" onclick="location.href='login.html'">Войти</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const userOrders = allOrders.filter(order => order.userEmail === currentUser);
+            
+            console.log('Все заказы:', allOrders);
+            console.log('Заказы пользователя:', userOrders);
+            
+            if (userOrders.length === 0) {
+                ordersContainer.innerHTML = `
+                    <div class="empty-orders">
+                        <p class="empty-orders-text">У вас пока нет заказов</p>
+                        <button class="shop-redirect-btn" onclick="location.href='index.html#bouquets'">Перейти к покупкам</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div class="orders-list">';
+            
+            // ПОКАЗЫВАЕМ СНАЧАЛА ПОСЛЕДНИЕ ЗАКАЗЫ
+            [...userOrders].reverse().forEach((order) => {
+                const orderDate = new Date(order.date);
+                const formattedDate = orderDate.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // ИСПОЛЬЗУЕМ orderNumber ИЛИ order.id (НО ТЕПЕРЬ order.id = 1,2,3...)
+                const displayNumber = order.orderNumber || order.id;
+                
+                html += `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div class="order-number">Заказ №${displayNumber}</div>
+                            <div class="order-date">${formattedDate}</div>
+                            <div class="order-status ${order.status === 'completed' ? 'status-completed' : 'status-processing'}">${order.status === 'completed' ? 'Выполнен' : 'В обработке'}</div>
+                        </div>
+                        <div class="order-items">
+                            <h4>Состав заказа:</h4>
+                            <ul>
+                `;
+                
+                if (order.items && order.items.length > 0) {
+                    order.items.forEach(item => {
+                        html += `<li>${item.name} — ${item.quantity} шт. × ${item.price} руб. = ${item.quantity * item.price} руб.</li>`;
+                    });
+                } else {
+                    html += `<li>Ошибка: состав заказа не найден</li>`;
+                }
+                
+                html += `
+                            </ul>
+                        </div>
+                        <div class="order-total">
+                            <strong>Итого: ${order.total} руб.</strong>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            ordersContainer.innerHTML = html;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthButtons();
+            displayOrders();
+        });
+    </script>
+</body>
+</html>
